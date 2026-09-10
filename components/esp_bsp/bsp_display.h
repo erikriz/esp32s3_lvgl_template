@@ -10,7 +10,7 @@
 #define BSP_DISPLAY_ROTATION      (90)
 
 /* Native panel resolution (portrait) */
-#define BSP_LCD_NATIVE_H_RES      (172)
+#define BSP_LCD_NATIVE_H_RES      (240)
 #define BSP_LCD_NATIVE_V_RES      (320)
 
 /* Effective resolution after rotation */
@@ -25,18 +25,18 @@
 #define BSP_LCD_DRAW_BUFF_HEIGHT  (50)
 #define BSP_LCD_DRAW_BUFF_DOUBLE  (1)
 
-/* SPI bus */
+/* SPI bus — shared with the SD card (BSP_PIN_SD_CS) */
 #define BSP_SPI_HOST              SPI2_HOST
 #define BSP_LCD_PIXEL_CLOCK_HZ    (80 * 1000 * 1000)
 
 /* GPIO pins */
-#define BSP_PIN_LCD_MISO          GPIO_NUM_NC
-#define BSP_PIN_LCD_MOSI          GPIO_NUM_39
-#define BSP_PIN_LCD_SCLK          GPIO_NUM_38
-#define BSP_PIN_LCD_CS            GPIO_NUM_21
-#define BSP_PIN_LCD_DC            GPIO_NUM_45
-#define BSP_PIN_LCD_RST           GPIO_NUM_40
-#define BSP_PIN_LCD_BL            GPIO_NUM_46
+#define BSP_PIN_LCD_MISO          GPIO_NUM_40
+#define BSP_PIN_LCD_MOSI          GPIO_NUM_38
+#define BSP_PIN_LCD_SCLK          GPIO_NUM_39
+#define BSP_PIN_LCD_CS            GPIO_NUM_45
+#define BSP_PIN_LCD_DC            GPIO_NUM_42
+#define BSP_PIN_LCD_RST           GPIO_NUM_NC
+#define BSP_PIN_LCD_BL            GPIO_NUM_1
 
 /* Backlight PWM */
 #define LCD_BL_LEDC_TIMER         LEDC_TIMER_0

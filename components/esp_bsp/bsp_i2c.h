@@ -4,8 +4,8 @@
 #include "driver/i2c_master.h"
 #include "driver/gpio.h"
 
-#define BSP_PIN_I2C_SDA   GPIO_NUM_42
-#define BSP_PIN_I2C_SCL   GPIO_NUM_41
+#define BSP_PIN_I2C_SDA   GPIO_NUM_48
+#define BSP_PIN_I2C_SCL   GPIO_NUM_47
 #define BSP_I2C_PORT_NUM  0
 
 #ifdef __cplusplus

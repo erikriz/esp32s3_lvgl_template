@@ -2,17 +2,14 @@
 #define __BSP_SDCARD_H_
 #include "esp_err.h"
 #include "esp_vfs_fat.h"
-#include "driver/sdmmc_host.h"
+#include "driver/sdspi_host.h"
 #include "driver/sdmmc_defs.h"
+#include "driver/gpio.h"
 #include <stdio.h>
 
-#define BSP_PIN_SD_CLK    GPIO_NUM_16
-#define BSP_PIN_SD_CMD    GPIO_NUM_15
-#define BSP_PIN_SD_D0     GPIO_NUM_17
-#define BSP_PIN_SD_D1     GPIO_NUM_18
-#define BSP_PIN_SD_D2     GPIO_NUM_13
-#define BSP_PIN_SD_D3     GPIO_NUM_14
-
+/* SD card over SPI — shares the SPI bus (BSP_SPI_HOST, bsp_display.h) with
+ * the LCD. Only the chip-select line is dedicated to the card. */
+#define BSP_PIN_SD_CS     GPIO_NUM_41
 
 #ifdef __cplusplus
 extern "C" {

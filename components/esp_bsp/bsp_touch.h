@@ -2,10 +2,10 @@
 #define __BSP_TOUCH_H__
 
 #include "driver/i2c_master.h"
-#include "esp_lcd_touch_axs5106.h"
+#include "esp_lcd_touch_cst816s.h"
 
-#define BSP_PIN_TP_INT    GPIO_NUM_47
-#define BSP_PIN_TP_RST    GPIO_NUM_48
+/* The CST816D on this board has no dedicated reset/interrupt lines broken
+ * out to the MCU — the touch driver runs purely in I2C polling mode. */
 
 #ifdef __cplusplus
 extern "C" {

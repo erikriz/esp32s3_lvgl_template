@@ -51,20 +51,18 @@ esp_err_t bsp_lvgl_init(void)
     disp_cfg.rotation.swap_xy = true;
     disp_cfg.rotation.mirror_x = true;
     disp_cfg.rotation.mirror_y = false;
-    ESP_ERROR_CHECK(esp_lcd_panel_set_gap(bsp_display_get_panel_handle(), 0, 34));
 #elif BSP_DISPLAY_ROTATION == 180
     disp_cfg.rotation.swap_xy = false;
     disp_cfg.rotation.mirror_x = true;
     disp_cfg.rotation.mirror_y = true;
-    ESP_ERROR_CHECK(esp_lcd_panel_set_gap(bsp_display_get_panel_handle(), 34, 0));
 #elif BSP_DISPLAY_ROTATION == 270
     disp_cfg.rotation.swap_xy = true;
     disp_cfg.rotation.mirror_x = false;
     disp_cfg.rotation.mirror_y = true;
-    ESP_ERROR_CHECK(esp_lcd_panel_set_gap(bsp_display_get_panel_handle(), 0, 34));
-#else
-    ESP_ERROR_CHECK(esp_lcd_panel_set_gap(bsp_display_get_panel_handle(), 34, 0));
 #endif
+    /* No esp_lcd_panel_set_gap() needed here: the panel's native RAM window
+     * (240x320) matches BSP_LCD_NATIVE_H_RES/V_RES exactly, unlike the
+     * previous JD9853 panel which needed a manual offset. */
 
     s_lvgl_disp = lvgl_port_add_disp(&disp_cfg);
 

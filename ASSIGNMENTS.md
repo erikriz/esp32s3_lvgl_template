@@ -1,6 +1,6 @@
 # Asignaciones LVGL — ESP32-S3
 
-Guía de trabajo para las cinco asignaciones progresivas de desarrollo de UI con LVGL sobre la placa **Waveshare ESP32-S3-Touch-LCD-1.47**.
+Guía de trabajo para las cinco asignaciones progresivas de desarrollo de UI con LVGL sobre la placa **Waveshare ESP32-S3-Touch-LCD-2**.
 
 Cada asignación introduce conceptos nuevos de LVGL, usa periféricos reales del hardware y construye hacia una aplicación completa de monitorización de sensores en tiempo real.
 

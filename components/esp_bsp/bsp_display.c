@@ -4,7 +4,6 @@
 #include "driver/spi_master.h"
 #include "driver/ledc.h"
 
-#include "esp_lcd_jd9853.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_vendor.h"
 #include "esp_lcd_panel_ops.h"
@@ -29,8 +28,14 @@ void bsp_display_init(void)
     ESP_ERROR_CHECK(spi_bus_initialize(BSP_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     ESP_LOGI(TAG, "Install panel IO");
-    esp_lcd_panel_io_spi_config_t io_config = JD9853_PANEL_IO_SPI_CONFIG(BSP_PIN_LCD_CS, BSP_PIN_LCD_DC, NULL, NULL);
+    esp_lcd_panel_io_spi_config_t io_config = {};
+    io_config.cs_gpio_num = BSP_PIN_LCD_CS;
+    io_config.dc_gpio_num = BSP_PIN_LCD_DC;
+    io_config.spi_mode = 0;
     io_config.pclk_hz = BSP_LCD_PIXEL_CLOCK_HZ;
+    io_config.trans_queue_depth = 10;
+    io_config.lcd_cmd_bits = 8;
+    io_config.lcd_param_bits = 8;
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_SPI_HOST, &io_config, &s_io_handle));
 
     esp_lcd_panel_dev_config_t panel_config = {
@@ -38,7 +43,8 @@ void bsp_display_init(void)
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .bits_per_pixel = 16,
     };
-    esp_lcd_new_panel_jd9853(s_io_handle, &panel_config, &s_panel_handle);
+    ESP_LOGI(TAG, "Install ST7789 panel driver");
+    ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(s_io_handle, &panel_config, &s_panel_handle));
 
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel_handle));

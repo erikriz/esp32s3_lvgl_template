@@ -1,6 +1,6 @@
 # ESP32-S3 LVGL Template
 
-Plantilla para el desarrollo de interfaces gráficas con LVGL en la placa **Waveshare ESP32-S3-Touch-LCD-1.47** ([ficha técnica](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-1.47)).
+Plantilla para el desarrollo de interfaces gráficas con LVGL en la placa **Waveshare ESP32-S3-Touch-LCD-2** ([ficha técnica](https://docs.waveshare.com/ESP32-S3-Touch-LCD-2)).
 
 Diseñada para que el flujo de trabajo sea simple:
 
@@ -36,14 +36,17 @@ Diseñada para que el flujo de trabajo sea simple:
 
 | Campo | Valor |
 |-------|-------|
-| Placa | Waveshare ESP32-S3-Touch-LCD-1.47 |
-| SoC | ESP32-S3 (dual-core Xtensa LX7, 240 MHz) |
-| Pantalla | 1.47" JD9853, 172 × 320 px, RGB565 |
-| Táctil | AXS5106 (I2C) |
-| Flash | 2 MB |
-| PSRAM | 8 MB (OPI) |
-| SD Card | SDMMC (4 bits) |
+| Placa | Waveshare ESP32-S3-Touch-LCD-2 |
+| SoC | ESP32-S3R8 (dual-core Xtensa LX7, 240 MHz) |
+| Pantalla | 2" ST7789T3, 240 × 320 px, RGB565 |
+| Táctil | CST816D (I2C) |
+| Flash | 16 MB |
+| PSRAM | 8 MB (stacked) |
+| SD Card | SPI (comparte bus con la pantalla) |
+| IMU | QMI8658 (I2C, no integrado en este BSP todavía) |
 | Batería | ADC (canal de monitorización de voltaje) |
+
+> **Otra placa:** Si usas una Waveshare ESP32-S3-Touch-LCD distinta, ajusta los pines, la resolución y el driver en `components/esp_bsp/` según su ficha técnica — el resto de la plantilla (capa LVGL, pantallas, cola de actualización) no depende del hardware específico.
 
 ---
 
@@ -55,9 +58,11 @@ Diseñada para que el flujo de trabajo sea simple:
 | LVGL (`lvgl/lvgl`) | **8.4.0** | Gestionado por IDF Component Manager |
 | esp_lvgl_port (`espressif/esp_lvgl_port`) | **2.7.2** | Puerto LVGL para ESP-IDF |
 | esp_lcd_touch (`espressif/esp_lcd_touch`) | **1.2.1** | Driver base de pantalla táctil |
+| esp_lcd_touch_cst816s (`espressif/esp_lcd_touch_cst816s`) | **^1.1.0** | Driver táctil CST816D, gestionado por IDF Component Manager |
 | button (`espressif/button`) | **4.1.6** | Gestión de botones GPIO |
-| Driver LCD | JD9853 | Componente local (`components/esp_lcd_jd9853/`) |
-| Driver táctil | AXS5106 | Componente local (`components/esp_lcd_touch_axs5106/`) |
+| Driver LCD | ST7789 | Incluido de fábrica en el componente `esp_lcd` de ESP-IDF — no requiere componente aparte |
+
+> **Nota:** El driver ST7789 viene integrado en ESP-IDF (`esp_lcd_panel_vendor.h`), a diferencia del JD9853 de la placa anterior, que era un componente local. Por eso ya no existe `components/esp_lcd_jd9853/` en este template.
 
 > **Nota:** Para añadir o actualizar dependencias, edita `main/idf_component.yml` y ejecuta `idf.py update-dependencies` dentro del contenedor.
 
@@ -170,27 +175,28 @@ esp32s3_lvgl_template/
 │
 ├── components/
 │   ├── esp_bsp/                ← Board Support Package (display, táctil, I2C, WiFi…)
-│   │   ├── bsp_display.h/c     ← LCD SPI + retroiluminación LEDC
-│   │   ├── bsp_touch.h/c       ← Controlador táctil AXS5106
+│   │   ├── bsp_display.h/c     ← LCD SPI (ST7789) + retroiluminación LEDC
+│   │   ├── bsp_touch.h/c       ← Controlador táctil CST816D
 │   │   ├── bsp_lvgl.h/c        ← Inicialización del puerto LVGL
 │   │   ├── bsp_i2c.h/c         ← Bus I2C maestro
 │   │   ├── bsp_wifi.h/c        ← WiFi STA (opcional)
-│   │   ├── bsp_sdcard.h/c      ← Tarjeta SD SDMMC (opcional)
+│   │   ├── bsp_sdcard.h/c      ← Tarjeta SD por SPI, bus compartido con la pantalla (opcional)
 │   │   └── bsp_battery.h/c     ← Monitorización de batería ADC (opcional)
 │   │
-│   ├── lvgl_ui/                ← Capa de UI (ver sección Arquitectura)
-│   │   ├── CMakeLists.txt      ← NUNCA sobreescrito por SquareLine
-│   │   ├── lvgl_ui.h/c         ← Punto de entrada: lvgl_ui_start()
-│   │   ├── ui/                 ← ← EXPORT DE SQUARELINE (no tocar)
-│   │   └── screens/            ← Lógica de pantallas (aquí trabajas)
-│   │       ├── screens.h/c     ← Registro + motor de ciclo de vida
-│   │       ├── screens_update.h/c  ← Cola FreeRTOS inter-tarea
-│   │       ├── screens_timeout.h/c ← Timeout de inactividad / apagado
-│   │       ├── scr_main.h/c    ← Controlador de pantalla principal (ejemplo)
-│   │       └── scr_<nombre>.h/c ← Un fichero por pantalla adicional
-│   │
-│   ├── esp_lcd_jd9853/         ← Driver LCD JD9853
-│   └── esp_lcd_touch_axs5106/  ← Driver táctil AXS5106
+│   └── lvgl_ui/                ← Capa de UI (ver sección Arquitectura)
+│       ├── CMakeLists.txt      ← NUNCA sobreescrito por SquareLine
+│       ├── lvgl_ui.h/c         ← Punto de entrada: lvgl_ui_start()
+│       ├── ui/                 ← ← EXPORT DE SQUARELINE (no tocar)
+│       └── screens/            ← Lógica de pantallas (aquí trabajas)
+│           ├── screens.h/c     ← Registro + motor de ciclo de vida
+│           ├── screens_update.h/c  ← Cola FreeRTOS inter-tarea
+│           ├── screens_timeout.h/c ← Timeout de inactividad / apagado
+│           ├── scr_main.h/c    ← Controlador de pantalla principal (ejemplo)
+│           └── scr_<nombre>.h/c ← Un fichero por pantalla adicional
+│
+│   El driver ST7789 viene incluido en ESP-IDF y el táctil CST816D se resuelve
+│   como componente gestionado (`espressif/esp_lcd_touch_cst816s`) — ya no hay
+│   drivers de vendor locales en `components/` como en la placa anterior.
 │
 ├── .devcontainer/              ← Configuración Dev Container
 ├── partitions.csv              ← Tabla de particiones flash
@@ -204,44 +210,44 @@ esp32s3_lvgl_template/
 
 Todos los pines están definidos como constantes `BSP_PIN_*` en los headers del BSP. Para cambiar un pin, basta con editar el header correspondiente — el código no contiene números de GPIO sueltos.
 
-### Pantalla LCD (SPI — JD9853)
+### Pantalla LCD (SPI — ST7789)
+
+La pantalla y la SD comparten el mismo bus SPI (`BSP_SPI_HOST` = `SPI2_HOST`); cada una tiene su propio Chip Select.
 
 | GPIO | Constante BSP | Función |
 |------|--------------|---------|
-| 39 | `BSP_PIN_LCD_MOSI` | SPI MOSI (datos hacia pantalla) |
-| 38 | `BSP_PIN_LCD_SCLK` | SPI CLK |
-| NC | `BSP_PIN_LCD_MISO` | SPI MISO (no conectado) |
-| 21 | `BSP_PIN_LCD_CS` | SPI Chip Select |
-| 45 | `BSP_PIN_LCD_DC` | Data / Command |
-| 40 | `BSP_PIN_LCD_RST` | Reset del panel |
-| 46 | `BSP_PIN_LCD_BL` | Retroiluminación (PWM LEDC) |
+| 39 | `BSP_PIN_LCD_SCLK` | SPI CLK (compartido con la SD) |
+| 38 | `BSP_PIN_LCD_MOSI` | SPI MOSI, datos hacia pantalla (compartido con la SD) |
+| 40 | `BSP_PIN_LCD_MISO` | SPI MISO — sin uso por la pantalla, requerido por la SD (compartido) |
+| 45 | `BSP_PIN_LCD_CS` | SPI Chip Select de la pantalla |
+| 42 | `BSP_PIN_LCD_DC` | Data / Command |
+| NC | `BSP_PIN_LCD_RST` | Reset del panel (no conectado — se resetea por software) |
+| 1 | `BSP_PIN_LCD_BL` | Retroiluminación (PWM LEDC) |
 
-### Táctil (I2C — AXS5106)
-
-| GPIO | Constante BSP | Función |
-|------|--------------|---------|
-| 41 | `BSP_PIN_I2C_SCL` | I2C Clock |
-| 42 | `BSP_PIN_I2C_SDA` | I2C Data |
-| 47 | `BSP_PIN_TP_INT` | Interrupción táctil |
-| 48 | `BSP_PIN_TP_RST` | Reset táctil |
-
-### Tarjeta SD (SDMMC 4-bit)
+### Táctil (I2C — CST816D)
 
 | GPIO | Constante BSP | Función |
 |------|--------------|---------|
-| 15 | `BSP_PIN_SD_CMD` | SD CMD |
-| 16 | `BSP_PIN_SD_CLK` | SD CLK |
-| 17 | `BSP_PIN_SD_D0` | SD Data 0 |
-| 18 | `BSP_PIN_SD_D1` | SD Data 1 |
-| 13 | `BSP_PIN_SD_D2` | SD Data 2 |
-| 14 | `BSP_PIN_SD_D3` | SD Data 3 |
+| 47 | `BSP_PIN_I2C_SCL` | I2C Clock (compartido con el IMU QMI8658) |
+| 48 | `BSP_PIN_I2C_SDA` | I2C Data (compartido con el IMU QMI8658) |
+
+> El CST816D de esta placa no tiene líneas de reset/interrupción dedicadas al MCU — el driver `esp_lcd_touch_cst816s` lo sondea por I2C en cada lectura, sin necesitar GPIO adicionales.
+
+### Tarjeta SD (SPI, bus compartido con la pantalla)
+
+| GPIO | Constante BSP | Función |
+|------|--------------|---------|
+| 39 / 38 / 40 | `BSP_PIN_LCD_SCLK` / `MOSI` / `MISO` | Mismo bus SPI que la pantalla (`components/esp_bsp/bsp_display.h`) |
+| 41 | `BSP_PIN_SD_CS` | SPI Chip Select de la SD |
+
+> **Orden de inicialización:** `bsp_sdcard_init()` reutiliza el bus SPI ya inicializado por `bsp_display_init()` — no vuelve a llamar `spi_bus_initialize()`. Por eso debe invocarse **después** de `bsp_display_init()` en `main.c`.
 
 ### Batería (ADC)
 
 | Parámetro | Valor | Constante BSP |
 |-----------|-------|--------------|
-| Unidad ADC | ADC_UNIT_2 | `BSP_BATTERY_ADC_UNIT` |
-| Canal | ADC_CHANNEL_1 | `BSP_BATTERY_ADC_CHANNEL` |
+| Unidad ADC | ADC_UNIT_1 | `BSP_BATTERY_ADC_UNIT` |
+| Canal | ADC_CHANNEL_4 | `BSP_BATTERY_ADC_CHANNEL` |
 | Atenuación | 12 dB (~0–3.9 V) | `BSP_BATTERY_ADC_ATTEN` |
 
 ### Rotación de pantalla
@@ -253,6 +259,8 @@ La rotación se configura con una sola constante en `components/esp_bsp/bsp_disp
 ```
 
 La resolución efectiva (`BSP_LCD_H_RES` / `BSP_LCD_V_RES`) y la configuración del driver táctil se ajustan automáticamente al cambiar este valor.
+
+> **Calibración de ejes táctiles:** Los flags `swap_xy` / `mirror_x` / `mirror_y` de `bsp_touch.c` para el CST816D se fijaron por analogía con el firmware oficial de Waveshare, pero no pudieron verificarse contra hardware físico al escribir esta plantilla. Si el punto de toque no coincide con el dedo al flashear por primera vez, ajusta esos tres flags dentro del bloque `#if BSP_DISPLAY_ROTATION == ...` correspondiente en `components/esp_bsp/bsp_touch.c`.
 
 ---
 
@@ -566,11 +574,11 @@ Crea o abre el proyecto de SquareLine y ajusta la configuración en **Project Se
 | LVGL version | **8.x** (usar la más cercana a 8.4) |
 | Color depth | **16 bit** |
 | Color swap | **Disabled** (`LV_COLOR_16_SWAP = 0`) |
-| Screen width | **320** px (landscape) / **172** px (portrait) |
-| Screen height | **172** px (landscape) / **320** px (portrait) |
+| Screen width | **320** px (landscape) / **240** px (portrait) |
+| Screen height | **240** px (landscape) / **320** px (portrait) |
 | LVGL include | `lvgl.h` |
 
-> **Orientación:** La pantalla nativa es 172 × 320 (portrait). Si usas `BSP_DISPLAY_ROTATION = 90` (landscape), diseña en SquareLine con 320 × 172.
+> **Orientación:** La pantalla nativa es 240 × 320 (portrait). Si usas `BSP_DISPLAY_ROTATION = 90` (landscape, valor por defecto), diseña en SquareLine con 320 × 240.
 
 > **Color swap:** El byte swap RGB565 lo gestiona el hardware (DMA). SquareLine debe generarse **sin** swap (`LV_COLOR_16_SWAP = 0`) para que coincida con la configuración del driver.
 
@@ -838,7 +846,7 @@ Desde la **raíz del proyecto** en el sistema anfitrión, con el entorno virtual
 
 ```bash
 esptool --chip esp32s3 -b 460800 --before default-reset --after hard-reset \
-  write-flash --flash-mode dio --flash-size 2MB --flash-freq 80m \
+  write-flash --flash-mode dio --flash-size 16MB --flash-freq 80m \
   0x0     build/bootloader/bootloader.bin \
   0x10000 build/esp32s3_lvgl_template.bin \
   0x8000  build/partition_table/partition-table.bin
@@ -878,10 +886,12 @@ bsp_wifi_init("NOMBRE_RED", "CONTRASEÑA");
 
 ### Tarjeta SD
 
+La SD usa el mismo bus SPI que la pantalla, así que `bsp_display_init()` debe ejecutarse **antes** de `bsp_sdcard_init()` (ya es el orden en el `main.c` de la plantilla).
+
 ```c
 #include "bsp_sdcard.h"
 
-// En app_main():
+// En app_main(), DESPUÉS de bsp_display_init():
 bsp_sdcard_init();   // monta en /sdcard
 
 // Opcional: registrar el driver FATFS en LVGL (para cargar imágenes desde SD)

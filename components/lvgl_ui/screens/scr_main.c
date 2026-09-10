@@ -10,22 +10,35 @@ static const char *TAG = "scr_main";
  * transitions because they are attached to the widget, not the screen. */
 /* ------------------------------------------------------------------ */
 
-/* Example:
-static void on_btn_pressed(lv_event_t *e)
+static uint32_t s_tap_count = 0;
+
+static void on_arc_value_changed(lv_event_t *e)
 {
     (void)e;
-    ui_screens_navigate(SCREEN_SETTINGS);
+    int32_t value = lv_arc_get_value(ui_arcTest);
+    lv_label_set_text_fmt(ui_lblArcValue, "%d", (int)value);
 }
-*/
+
+static void on_btn_tap_clicked(lv_event_t *e)
+{
+    (void)e;
+    s_tap_count++;
+    lv_label_set_text_fmt(ui_lblTapCount, "Toques: %u", (unsigned)s_tap_count);
+
+    /* Flip the background between two colors on every tap — a working
+     * touch panel is obvious at a glance, even without reading the label. */
+    lv_color_t color = (s_tap_count % 2 == 0) ? lv_palette_main(LV_PALETTE_BLUE_GREY)
+                                               : lv_palette_main(LV_PALETTE_TEAL);
+    lv_obj_set_style_bg_color(ui_scrMain, color, 0);
+}
 
 /* ------------------------------------------------------------------ */
 
 void scr_main_prepare(void)
 {
-    /* Register callbacks on widgets that must stay active across screens.
-     * Example:
-     *   lv_obj_add_event_cb(ui_btnSettings, on_btn_pressed, LV_EVENT_CLICKED, NULL);
-     */
+    /* Register callbacks on widgets that must stay active across screens. */
+    lv_obj_add_event_cb(ui_arcTest, on_arc_value_changed, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_event_cb(ui_btnTap, on_btn_tap_clicked, LV_EVENT_CLICKED, NULL);
     ESP_LOGD(TAG, "prepare");
 }
 
@@ -33,8 +46,6 @@ void scr_main_init(void)
 {
     /* Called every time the main screen becomes active.
      * Refresh dynamic content, restart animations, etc.
-     * Example:
-     *   lv_label_set_text(ui_lblStatus, "Ready");
      */
     ESP_LOGD(TAG, "init");
 }

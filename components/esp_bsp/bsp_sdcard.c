@@ -3,12 +3,13 @@
 #include <sys/stat.h>
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
+#include "driver/sdspi_host.h"
 #include "nvs_flash.h"
 
 #include "esp_check.h"
 #include "esp_log.h"
 
+#include "bsp_display.h"
 #include "bsp_sdcard.h"
 
 sdmmc_card_t *card = NULL;
@@ -39,41 +40,26 @@ void bsp_sdcard_init(void)
     const char mount_point[] = "/sdcard";
     ESP_LOGI(TAG, "Initializing SD card");
 
-    // Use settings defined above to initialize SD card and mount FAT filesystem.
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
     // Please check its source code and implement error recovery when developing
     // production applications.
 
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
+    ESP_LOGI(TAG, "Using SPI peripheral");
 
-    // By default, SD card frequency is initialized to SDMMC_FREQ_DEFAULT (20MHz)
-    // For setting a specific frequency, use host.max_freq_khz (range 400kHz - 40MHz for SDMMC)
-    // Example: for fixed frequency of 10MHz, use host.max_freq_khz = 10000;
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    // The SD card lives on the same SPI bus as the LCD (BSP_SPI_HOST). That
+    // bus is already initialized by bsp_display_init() — DO NOT call
+    // spi_bus_initialize() again here, esp_vfs_fat_sdspi_mount() just
+    // attaches a new device (chip select) to the existing bus.
+    sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+    host.slot = BSP_SPI_HOST;
 
-    sdmmc_slot_config_t slot_config = {};
-
-    // On chips where the GPIOs used for SD card can be configured, set them in
-    // the slot_config structure:
-    slot_config.width = 4;
-    slot_config.cd = SDMMC_SLOT_NO_CD;
-    slot_config.wp = SDMMC_SLOT_NO_WP;
-    slot_config.width = SDMMC_SLOT_WIDTH_DEFAULT;
-    slot_config.flags = 0;
-    slot_config.clk = BSP_PIN_SD_CLK;
-    slot_config.cmd = BSP_PIN_SD_CMD;
-    slot_config.d0 = BSP_PIN_SD_D0;
-    slot_config.d1 = BSP_PIN_SD_D1;
-    slot_config.d2 = BSP_PIN_SD_D2;
-    slot_config.d3 = BSP_PIN_SD_D3;
-
-    // Enable internal pullups on enabled pins. The internal pullups
-    // are insufficient however, please make sure 10k external pullups are
-    // connected on the bus. This is for debug / example purpose only.
-    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+    // This initializes the slot without card detect (CD) and write protect (WP) signals.
+    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+    slot_config.gpio_cs = BSP_PIN_SD_CS;
+    slot_config.host_id = host.slot;
 
     ESP_LOGI(TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
+    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
 
     if (ret != ESP_OK)
     {

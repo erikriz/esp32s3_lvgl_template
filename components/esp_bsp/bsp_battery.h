@@ -2,9 +2,9 @@
 #define __BSP_BATTERY_H__
 #include <stdio.h>
 
-#define BSP_BATTERY_ADC_CHANNEL   ADC_CHANNEL_1
+#define BSP_BATTERY_ADC_CHANNEL   ADC_CHANNEL_4
 #define BSP_BATTERY_ADC_ATTEN     ADC_ATTEN_DB_12
-#define BSP_BATTERY_ADC_UNIT      ADC_UNIT_2
+#define BSP_BATTERY_ADC_UNIT      ADC_UNIT_1
 
 #ifdef __cplusplus
 extern "C" {
